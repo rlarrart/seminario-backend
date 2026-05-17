@@ -1,0 +1,47 @@
+services:
+  # ---- Base de Datos PostgreSQL ----
+  postgres:
+    image: postgres:17-alpine
+    container_name: minimax-db
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-minimax_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-minimax_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---- API NestJS (modo desarrollo con hot-reload) ----
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minimax-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:3001"
+    env_file:
+      - .env
+    environment:
+      # Dentro de Docker, el host de la BD es el nombre del servicio
+      DB_HOST: postgres
+    volumes:
+      # Montamos el código fuente para que el hot-reload detecte cambios
+      - ./src:/app/src
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.build.json:/app/tsconfig.build.json
+      - ./nest-cli.json:/app/nest-cli.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local
