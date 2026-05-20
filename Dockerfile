@@ -14,4 +14,4 @@ RUN npm ci
 EXPOSE 3001
 
 # Arrancamos en modo desarrollo con watch (hot-reload)
-CMD ["npm", "run", "start:dev"]
+CMD ["sh", "-c", "npm run build && npm run start:prod"]
