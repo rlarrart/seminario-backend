@@ -5,4 +5,4 @@ RUN npm ci
 COPY . .
 RUN npm run build
 EXPOSE 3001
-CMD ["sh", "-c", "node dist/seed.js && node dist/main"]
+CMD ["npm", "run", "start:prod"]
