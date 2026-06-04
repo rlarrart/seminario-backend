@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { AdhesionsService } from './adhesions.service';
 import { CreateAdhesionDto } from './dto/create-adhesion.dto';
+import { UpdateAdhesionStatusDto } from './dto/update-adhesion-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -36,5 +37,17 @@ export class AdhesionsController {
     @CurrentUser() user: User,
   ) {
     return this.adhesionsService.cancel(id, user.id, user.name);
+  }
+
+  // Actualizar estado del pedido (solo proveedores)
+  @Patch(':id/status')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPPLIER)
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateAdhesionStatusDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.adhesionsService.updateStatus(id, updateStatusDto.status, user.id);
   }
 }

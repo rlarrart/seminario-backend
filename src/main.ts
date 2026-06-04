@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as express from 'express';
+import { join } from 'path';
+import * as fs from 'fs';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -11,6 +14,19 @@ async function bootstrap() {
 
   // Obtenemos el servicio de configuración
   const configService = app.get(ConfigService);
+
+  // Aseguramos la existencia de los directorios para archivos estáticos
+  const publicDir = join(process.cwd(), 'public');
+  const uploadsDir = join(publicDir, 'uploads');
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir);
+  }
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+  }
+
+  // Servimos la carpeta public de forma estática
+  app.use('/public', express.static(publicDir));
 
   // Configuramos el prefijo global para la API
   app.setGlobalPrefix('api');

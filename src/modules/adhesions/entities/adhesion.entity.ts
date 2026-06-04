@@ -7,6 +7,9 @@ export enum AdhesionStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   CANCELLED = 'cancelled',
+  PREPARING = 'preparing',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
 }
 
 // Enum de razones de cancelación

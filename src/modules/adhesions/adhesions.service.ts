@@ -236,4 +236,53 @@ export class AdhesionsService {
 
     return { message: 'Tu participación ha sido cancelada y el reembolso virtual procesado exitosamente' };
   }
+
+  // Actualizar estado del pedido (solo proveedores)
+  async updateStatus(adhesionId: string, status: AdhesionStatus, supplierId: string): Promise<Adhesion> {
+    const adhesion = await this.adhesionRepository.findOne({
+      where: { id: adhesionId },
+      relations: ['opportunity'],
+    });
+
+    if (!adhesion) {
+      throw new NotFoundException('Adhesión no encontrada');
+    }
+
+    // El estado del pedido individual solo se puede actualizar si la oportunidad está confirmada
+    if (adhesion.opportunity.status !== OpportunityStatus.CONFIRMED) {
+      throw new BadRequestException('El estado de los pedidos individuales solo se puede actualizar si la compra grupal ya está confirmada');
+    }
+
+    // Validar que el proveedor autenticado sea el dueño de la oportunidad
+    if (adhesion.opportunity.supplierId !== supplierId) {
+      throw new ForbiddenException('No tienes permisos para modificar el estado de esta adhesión');
+    }
+
+    adhesion.status = status;
+    const saved = await this.adhesionRepository.save(adhesion);
+
+    // Mapeamos los estados a etiquetas legibles
+    const statusLabels: Record<AdhesionStatus, string> = {
+      [AdhesionStatus.PENDING]: 'Pendiente',
+      [AdhesionStatus.CONFIRMED]: 'Confirmado',
+      [AdhesionStatus.CANCELLED]: 'Cancelado',
+      [AdhesionStatus.PREPARING]: 'En preparación',
+      [AdhesionStatus.SHIPPED]: 'Enviado',
+      [AdhesionStatus.DELIVERED]: 'Entregado',
+    };
+    const label = statusLabels[status];
+
+    // Notificar al comprador
+    await this.notificationRepository.save(
+      this.notificationRepository.create({
+        userId: adhesion.userId,
+        type: 'order_status_updated',
+        title: 'Actualización de pedido',
+        message: `El proveedor actualizó tu pedido de "${adhesion.opportunity.title}" al estado: "${label}".`,
+        metadata: { opportunityId: adhesion.opportunity.id, adhesionId: adhesion.id, status },
+      }),
+    );
+
+    return saved;
+  }
 }
