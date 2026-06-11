@@ -34,17 +34,17 @@ export class ReviewsService {
       throw new BadRequestException('Solo se pueden calificar oportunidades que hayan sido confirmadas y finalizadas con éxito');
     }
 
-    // 2. Validar que el usuario haya participado de forma efectiva (adhesión confirmada)
+    // 2. Validar que el usuario haya recibido el producto (adhesión entregada)
     const activeAdhesion = await this.adhesionRepository.findOne({
       where: {
         userId,
         opportunityId: opportunity.id,
-        status: AdhesionStatus.CONFIRMED,
+        status: AdhesionStatus.DELIVERED,
       },
     });
 
     if (!activeAdhesion) {
-      throw new BadRequestException('Debes haber participado en esta compra grupal para poder dejar una valoración');
+      throw new BadRequestException('Debes haber recibido el producto (estado entregado) en esta compra grupal para poder dejar una valoración');
     }
 
     // 3. Validar que no haya calificado la misma oportunidad previamente (Unique authorId + opportunityId)
@@ -86,5 +86,16 @@ export class ReviewsService {
       relations: ['author'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  // Obtener todas las reseñas recibidas por un proveedor
+  async findBySupplier(supplierId: string): Promise<Review[]> {
+    return this.reviewRepository
+      .createQueryBuilder('review')
+      .leftJoinAndSelect('review.author', 'author')
+      .leftJoinAndSelect('review.opportunity', 'opportunity')
+      .where('opportunity.supplierId = :supplierId', { supplierId })
+      .orderBy('review.createdAt', 'DESC')
+      .getMany();
   }
 }

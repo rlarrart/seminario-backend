@@ -30,4 +30,10 @@ export class ReviewsController {
   async findByOpportunity(@Param('id') opportunityId: string) {
     return this.reviewsService.findByOpportunity(opportunityId);
   }
+
+  // Obtener opiniones recibidas por un proveedor específico (público)
+  @Get('suppliers/:id/reviews')
+  async findBySupplier(@Param('id') supplierId: string) {
+    return this.reviewsService.findBySupplier(supplierId);
+  }
 }
