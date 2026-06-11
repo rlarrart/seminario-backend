@@ -248,6 +248,10 @@ export class AdhesionsService {
       throw new NotFoundException('Adhesión no encontrada');
     }
 
+    if (adhesion.status === AdhesionStatus.DELIVERED) {
+      throw new BadRequestException('El pedido ya ha sido entregado y está cerrado. No se puede modificar su estado.');
+    }
+
     // El estado del pedido individual solo se puede actualizar si la oportunidad está confirmada
     if (adhesion.opportunity.status !== OpportunityStatus.CONFIRMED) {
       throw new BadRequestException('El estado de los pedidos individuales solo se puede actualizar si la compra grupal ya está confirmada');

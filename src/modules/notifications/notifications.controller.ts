@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, UseGuards } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -25,5 +25,17 @@ export class NotificationsController {
   @Patch(':id/read')
   async readOne(@Param('id') id: string, @CurrentUser() user: User) {
     return this.notificationsService.markAsRead(id, user.id);
+  }
+
+  // Eliminar todas las notificaciones del usuario actual
+  @Delete()
+  async clearAll(@CurrentUser() user: User) {
+    return this.notificationsService.clearAll(user.id);
+  }
+
+  // Eliminar una notificación específica
+  @Delete(':id')
+  async deleteOne(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.notificationsService.deleteOne(id, user.id);
   }
 }
